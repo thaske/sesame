@@ -69,7 +69,7 @@ module Sesame
               filterable true
               formatted_value do
                 event_type = bindings[:object].event_type
-                badge(event_type, bindings[:object].display_event)
+                Sesame::RailsAdminConfig.badge(event_type, bindings[:object].display_event)
               end
             end
             field :recipient do
@@ -119,7 +119,7 @@ module Sesame
               sortable false
               formatted_value do
                 if bindings[:object].bounce_type.present?
-                  badge("bounce", bindings[:object].bounce_type)
+                  Sesame::RailsAdminConfig.badge("bounce", bindings[:object].bounce_type)
                 else
                   "-"
                 end
@@ -151,7 +151,7 @@ module Sesame
               field :event_type do
                 formatted_value do
                   event_type = bindings[:object].event_type
-                  badge(event_type, bindings[:object].display_event)
+                  Sesame::RailsAdminConfig.badge(event_type, bindings[:object].display_event)
                 end
               end
 
@@ -319,7 +319,7 @@ module Sesame
               filterable false
               formatted_value do
                 status = bindings[:object].current_status
-                badge(status, bindings[:object].display_status)
+                Sesame::RailsAdminConfig.badge(status, bindings[:object].display_status)
               end
             end
             field :user do
@@ -360,7 +360,7 @@ module Sesame
                 label "Status"
                 formatted_value do
                   status = bindings[:object].current_status
-                  badge(status, bindings[:object].display_status)
+                  Sesame::RailsAdminConfig.badge(status, bindings[:object].display_status)
                 end
               end
 
@@ -559,6 +559,8 @@ module Sesame
         css_class = mapping.fetch(event_type.to_s, "default")
         %(<span class="label label-#{css_class}">#{label}</span>).html_safe
       end
+
+      public :badge
     end
   end
 end

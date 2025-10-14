@@ -1,0 +1,56 @@
+# frozen_string_literal: true
+
+class CreateSesameTables < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    create_table :emails do |t|
+      t.string :recipient, null: false
+      t.string :subject
+      t.string :mailer_class, null: false
+      t.string :mailer_method, null: false
+      t.string :message_id
+      t.json :metadata
+      t.json :tags, default: {}
+      t.references :user, null: true, foreign_key: true
+
+      t.timestamps
+    end
+
+    add_index :emails, :message_id, unique: true
+    add_index :emails, :recipient
+    add_index :emails, %i[mailer_class mailer_method]
+    add_index :emails, :created_at
+
+    create_table :email_events do |t|
+      t.references :email, null: false, foreign_key: true
+      t.string :event_type, null: false
+      t.json :event_data
+      t.references :user, null: true, foreign_key: true
+
+      t.timestamps
+    end
+
+    add_index :email_events, %i[email_id event_type]
+    add_index :email_events, %i[email_id created_at]
+    add_index :email_events, :event_type
+    add_index :email_events, :created_at
+
+    create_table :email_suppressions do |t|
+      t.string :email, null: false
+      t.string :reason, null: false
+      t.string :suppression_type, null: false
+      t.string :message_id
+      t.string :feedback_id
+      t.string :source_ip
+      t.string :source_arn
+      t.text :raw_message
+      t.datetime :suppressed_at, null: false
+
+      t.timestamps
+    end
+
+    add_index :email_suppressions, :suppression_type
+    add_index :email_suppressions, :created_at
+    add_index :email_suppressions, %i[email suppression_type], unique: true
+    add_index :email_suppressions, :email
+  end
+end

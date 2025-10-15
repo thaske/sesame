@@ -7,6 +7,8 @@ require "sesame/configuration"
 require "sesame/models/email"
 require "sesame/models/email_event"
 require "sesame/models/email_suppression"
+require "sesame/rails_admin/helpers"
+require "sesame/rails_admin/fields/email_preview"
 require "sesame/engine"
 require "sesame/railtie" if defined?(Rails::Railtie)
 

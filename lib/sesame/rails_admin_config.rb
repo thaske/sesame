@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "base64"
 require "json"
 require "active_support/core_ext/string/output_safety"
+require "sesame/rails_admin/fields/email_preview"
 
 module Sesame
   module RailsAdminConfig
@@ -69,7 +69,7 @@ module Sesame
               filterable true
               formatted_value do
                 event_type = bindings[:object].event_type
-                Sesame::RailsAdminConfig.badge(event_type, bindings[:object].display_event)
+                Sesame::RailsAdmin::Helpers.badge(event_type, bindings[:object].display_event)
               end
             end
             field :recipient do
@@ -119,7 +119,7 @@ module Sesame
               sortable false
               formatted_value do
                 if bindings[:object].bounce_type.present?
-                  Sesame::RailsAdminConfig.badge("bounce", bindings[:object].bounce_type)
+                  Sesame::RailsAdmin::Helpers.badge("bounce", bindings[:object].bounce_type)
                 else
                   "-"
                 end
@@ -151,7 +151,7 @@ module Sesame
               field :event_type do
                 formatted_value do
                   event_type = bindings[:object].event_type
-                  Sesame::RailsAdminConfig.badge(event_type, bindings[:object].display_event)
+                  Sesame::RailsAdmin::Helpers.badge(event_type, bindings[:object].display_event)
                 end
               end
 
@@ -319,7 +319,7 @@ module Sesame
               filterable false
               formatted_value do
                 status = bindings[:object].current_status
-                Sesame::RailsAdminConfig.badge(status, bindings[:object].display_status)
+                Sesame::RailsAdmin::Helpers.badge(status, bindings[:object].display_status)
               end
             end
             field :user do
@@ -360,7 +360,7 @@ module Sesame
                 label "Status"
                 formatted_value do
                   status = bindings[:object].current_status
-                  Sesame::RailsAdminConfig.badge(status, bindings[:object].display_status)
+                  Sesame::RailsAdmin::Helpers.badge(status, bindings[:object].display_status)
                 end
               end
 
@@ -479,39 +479,7 @@ module Sesame
             group :email_preview do
               label "Email Preview"
               field :email_preview do
-                label ""
-                formatted_value do
-                  if bindings[:object].mailer_class.present? &&
-                       bindings[:object].mailer_method.present?
-                    begin
-                      html_content =
-                        EmailPreviewer.generate_preview(bindings[:object])
-
-                      if html_content.present?
-                        encoded_content = Base64.strict_encode64(html_content)
-                        <<~HTML.html_safe
-                        <iframe
-                          src="data:text/html;base64,#{encoded_content}"
-                          style="width: 100%; height: 600px; border: none; display: block;"
-                          sandbox="allow-same-origin allow-scripts">
-                        </iframe>
-                      HTML
-                      else
-                        unavailable_style =
-                          "padding: 20px; background: #f8f9fa; border-radius: 3px; color: #666;"
-                        %(<div style="#{unavailable_style}">Email preview not available</div>).html_safe
-                      end
-                    rescue => e
-                      error_style =
-                        "padding: 20px; background: #f8f9fa; border-radius: 3px; color: #d32f2f;"
-                      %(<div style="#{error_style}">Error generating preview: #{e.message}</div>).html_safe
-                    end
-                  else
-                    fallback_style =
-                      "padding: 20px; background: #f8f9fa; border-radius: 3px; color: #666;"
-                    %(<div style="#{fallback_style}">Email preview not available</div>).html_safe
-                  end
-                end
+                Sesame::RailsAdmin::Fields::EmailPreview.apply(self)
               end
             end
 
@@ -540,27 +508,6 @@ module Sesame
           end
         end
       end
-
-      private
-
-      def badge(event_type, label)
-        mapping = {
-          "pending" => "warning",
-          "sent" => "info",
-          "delivered" => "success",
-          "bounce" => "danger",
-          "complaint" => "danger",
-          "failed" => "danger",
-          "suppressed" => "default",
-          "open" => "primary",
-          "click" => "primary",
-        }
-
-        css_class = mapping.fetch(event_type.to_s, "default")
-        %(<span class="label label-#{css_class}">#{label}</span>).html_safe
-      end
-
-      public :badge
     end
   end
 end

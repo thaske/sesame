@@ -13,7 +13,7 @@ module Sesame
 
     # Auto-configure RailsAdmin if it's loaded
     initializer "sesame.rails_admin", after: "rails_admin.init" do
-      if defined?(RailsAdmin)
+      if defined?(RailsAdmin) && Sesame.configuration.auto_configure_rails_admin
         require "sesame/rails_admin_config"
         Sesame::RailsAdminConfig.setup
       end

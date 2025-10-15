@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "cgi"
 require "json"
 
 module Sesame
@@ -210,6 +211,10 @@ module Sesame
         headers: extract_custom_headers,
       }
 
+      if (preview_html = extract_preview_html)
+        metadata[:preview_html] = preview_html
+      end
+
       if (args_header = header_value(mail["X-Mailer-Arguments"]))
         metadata[:mailer_arguments] = deserialize_arguments(args_header)
       end
@@ -232,6 +237,31 @@ module Sesame
       JSON.parse(header_value)
     rescue JSON::ParserError
       header_value
+    end
+
+    def extract_preview_html
+      return if mail.nil?
+
+      if mail.multipart?
+        html_part =
+          mail.parts.find { |part| part.content_type&.include?("text/html") }
+        return html_part.body.decoded if html_part
+
+        text_part =
+          mail.parts.find { |part| part.content_type&.include?("text/plain") }
+        return simple_format(text_part.body.decoded) if text_part
+      else
+        return mail.body.decoded if mail.content_type&.include?("text/html")
+        return simple_format(mail.body.decoded)
+      end
+    rescue StandardError => e
+      Rails.logger.debug { "Sesame preview capture failed: #{e.message}" }
+      nil
+    end
+
+    def simple_format(text)
+      escaped = CGI.escapeHTML(text.to_s)
+      "<p>#{escaped.gsub(/\n\n+/, "</p><p>").gsub("\n", "<br>")}</p>"
     end
 
     def header_value(field)

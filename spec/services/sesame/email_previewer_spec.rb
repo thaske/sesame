@@ -33,4 +33,24 @@ RSpec.describe Sesame::EmailPreviewer do
 
     expect(described_class.generate_preview(email)).to eq("<p>Hello</p>")
   end
+
+  it "returns stored preview html when available" do
+    email =
+      create(
+        :email,
+        metadata: {
+          "preview_html" => "<p>Stored preview</p>",
+        },
+        mailer_class: "ApplicationMailer",
+        mailer_method: "dummy",
+      )
+
+    Sesame.configure do |config|
+      config.preview_resolver = nil
+    end
+
+    expect(described_class.generate_preview(email)).to eq(
+      "<p>Stored preview</p>",
+    )
+  end
 end

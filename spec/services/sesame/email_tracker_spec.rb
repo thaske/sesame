@@ -26,6 +26,7 @@ RSpec.describe Sesame::EmailTracker do
       expect(email.email_events.order(:created_at).last.event_type).to eq(
         "pending",
       )
+      expect(email.metadata["preview_html"]).to eq("<p>Hello world</p>")
     end
   end
 
